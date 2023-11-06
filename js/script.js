@@ -1,29 +1,32 @@
-const hamburger = document.querySelector('.hamburger'),
-    menu = document.querySelector('.menu'),
-    closeElem = document.querySelector('.menu__close'),
-    menuOverlay = document.querySelector('.menu__overlay');
+const hamburger = document.querySelector('.hamburger');
+const menu = document.querySelector('.menu');
+const closeElem = document.querySelector('.menu__close');
+const menuOverlay = document.querySelector('.menu__overlay');
 
-hamburger.addEventListener('click', () => {
+function toggleMenu() {
     menu.classList.add('active');
+}
 
-});
-
-closeElem.addEventListener('click', () => {
+function closeMenu() {
     menu.classList.remove('active');
-});
-document.addEventListener("keydown", (e) => {
-    if (e.key == 'Escape') {
-        menu.classList.remove('active');
+}
+
+function handleKeyPress(e) {
+    if (e.key === 'Escape') {
+        closeMenu();
     }
-});
+}
 
-document.addEventListener('click', (e) => {
-    if (e.target == menuOverlay) {
-        menu.classList.remove('active');
+function handleMenuOverlayClick(e) {
+    if (e.target === menuOverlay) {
+        closeMenu();
     }
-});
+}
 
-
+hamburger.addEventListener('click', toggleMenu);
+closeElem.addEventListener('click', closeMenu);
+document.addEventListener("keydown", handleKeyPress);
+document.addEventListener('click', handleMenuOverlayClick);
 
 // % автомат счет
 const counters = document.querySelectorAll('.usage__percentage-percent'),
@@ -33,24 +36,6 @@ counters.forEach((item, i) => {
     lines[i].style.width = item.innerHTML;
 
 });
-
-$('form').submit(function (e) {
-    e.preventDefault();
-    $.ajax({
-        type: "POST",
-        url: "mailer/smart.php",
-        data: $(this).serialize()
-    }).done(function () {
-        $(this).find("input").val("");
-        $('#consultation, #order').fadeOut();
-        $('.overlay, #thanks').fadeIn('slow');
-
-        $('form').trigger('reset');
-    });
-    return false;
-});
-
-
 
 const scrolling = (upSelector) => {
     const upElem = document.querySelector(upSelector);
@@ -158,16 +143,115 @@ const scrolling = (upSelector) => {
 
 scrolling('.pageup');
 
+function showOverlay(overlay) {
+    overlay.style.display = 'block';
+}
+
+function hideOverlay(overlay) {
+    overlay.style.display = 'none';
+}
+
 const portfolioItems = document.querySelectorAll('.portfolio__item');
 
 portfolioItems.forEach((item) => {
+    const overlay = item.querySelector('.portfolio__overlay');
+
     item.addEventListener('mouseover', () => {
-        const overlay = item.querySelector('.portfolio__overlay');
-        overlay.style.display = 'block';
+        showOverlay(overlay);
     });
 
     item.addEventListener('mouseout', () => {
-        const overlay = item.querySelector('.portfolio__overlay');
-        overlay.style.display = 'none';
+        hideOverlay(overlay);
     });
+});
+
+
+
+
+const form = document.querySelector('#subscription_form');
+const popup = document.querySelector('#popup');
+const popupTitle = document.querySelector('.popup__form_title');
+const popupSubtitle = document.querySelector('.popup__form_subtitle');
+const popupCloseBtnUp = document.querySelector('.popup__form_close');
+const popupCloseBtnDown = document.querySelector('.popup__form_btn');
+const popupCloseOverlay = document.querySelector('.popup__wrapper');
+const emailInput = document.querySelector('#email_input');
+
+function showPopup(className) {
+    popup.classList.add(className);
+    document.body.classList.add('popup-open');
+}
+
+function closePopup() {
+    popup.style.display = 'none';
+    document.body.classList.remove('popup-open');
+    form.reset();
+}
+
+function getSuccessPopup() {
+    popupTitle.textContent = 'Success';
+    popupSubtitle.textContent = 'Thanks, I will contact you';
+    showPopup('active');
+}
+
+function getErrorPopup(message) {
+    popupTitle.textContent = 'Error!';
+    popupSubtitle.textContent = message || 'Please try again later';
+    showPopup('active');
+}
+
+function isValidEmail(email) {
+    const emailPattern = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,4}$/;
+    return emailPattern.test(email);
+}
+
+form.addEventListener('submit', (event) => {
+    event.preventDefault();
+    console.log('Form submitted');
+
+    if (!emailInput.validity.valid) {
+        getErrorPopup('Please check your email');
+        return;
+    }
+
+    const form = event.target,
+        formData = new FormData(form),
+        email = emailInput.value;
+
+    if (!isValidEmail(email)) {
+        getErrorPopup('Invalid email format');
+        return;
+    }
+
+    const xhr = new XMLHttpRequest();
+    xhr.open(form.method, form.action);
+    xhr.setRequestHeader("Accept", "application/json");
+    xhr.onreadystatechange = function () {
+        if (xhr.readyState === XMLHttpRequest.DONE) {
+            if (xhr.status === 200) {
+                getSuccessPopup();
+            } else {
+                getErrorPopup();
+            }
+        }
+    };
+
+    xhr.send(formData);
+});
+
+popupCloseBtnUp.addEventListener('click', (e) => {
+    e.preventDefault();
+    closePopup();
+});
+
+popupCloseBtnDown.addEventListener('click', (e) => {
+    e.preventDefault();
+    closePopup();
+});
+
+popupCloseOverlay.addEventListener('click', (e) => {
+    e.preventDefault();
+    if (e.target === popupCloseOverlay) {
+        closePopup();
+    }
 });
